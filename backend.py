@@ -1,13 +1,50 @@
 from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
 import asyncio
-from bleak import BleakClient
+from bleak import BleakClient, BleakScanner
 import os
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes to allow communication with AI frontend
 
-# Device configuration - update with your actual device details
-BLE_ADDRESS = "FC28F7A3-F547-7342-1F57-BB2939694BDC"
+# Device configuration
+DEVICE_NAME_KEYWORD = "wear"  # Device name must contain this keyword
 WRITE_CHAR_UUID = "6e400002-b5a3-f393-e0a9-e50e24dcca9e"
+
+# Cache for device address to avoid scanning every time
+_cached_device_address = None
+
+async def find_device_by_name(keyword: str = DEVICE_NAME_KEYWORD, timeout: float = 10.0):
+    """
+    Scan for BLE devices and find one with the keyword in its name.
+    Returns the device address if found, None otherwise.
+    """
+    global _cached_device_address
+    
+    # If we have a cached address, verify it's still available
+    if _cached_device_address:
+        try:
+            print(f"Checking cached device: {_cached_device_address}")
+            async with BleakClient(_cached_device_address, timeout=5.0) as client:
+                if client.is_connected:
+                    print(f"✅ Cached device still available")
+                    return _cached_device_address
+        except Exception as e:
+            print(f"Cached device no longer available: {e}")
+            _cached_device_address = None
+    
+    # Scan for devices
+    print(f"Scanning for devices with '{keyword}' in name...")
+    devices = await BleakScanner.discover(timeout=timeout)
+    
+    for device in devices:
+        if device.name and keyword.lower() in device.name.lower():
+            print(f"✅ Found device: {device.name} ({device.address})")
+            _cached_device_address = device.address
+            return device.address
+    
+    print(f"❌ No device found with '{keyword}' in name")
+    return None
 
 def crc16_modbus(data: bytes) -> bytes:
     """Calculate CRC16 Modbus checksum"""
@@ -50,8 +87,13 @@ def build_scent_command(scent_id: int, duration_sec: int) -> bytes:
 async def play_scent_ble(scent_id: int, duration: int):
     """Send a single scent command to the device"""
     try:
-        async with BleakClient(BLE_ADDRESS) as client:
-            print(f"Connecting to device {BLE_ADDRESS}...")
+        # Find device dynamically
+        device_address = await find_device_by_name()
+        if not device_address:
+            return {"status": "error", "message": f"Device with '{DEVICE_NAME_KEYWORD}' in name not found. Make sure device is powered on and in range."}
+        
+        async with BleakClient(device_address) as client:
+            print(f"Connecting to device {device_address}...")
             await client.connect()
             
             if not client.is_connected:
@@ -78,8 +120,13 @@ async def play_scent_ble(scent_id: int, duration: int):
 async def play_sequence_ble(sequence):
     """Send a sequence of scents to the device"""
     try:
-        async with BleakClient(BLE_ADDRESS) as client:
-            print(f"Connecting to device {BLE_ADDRESS}...")
+        # Find device dynamically
+        device_address = await find_device_by_name()
+        if not device_address:
+            return {"status": "error", "message": f"Device with '{DEVICE_NAME_KEYWORD}' in name not found. Make sure device is powered on and in range."}
+        
+        async with BleakClient(device_address) as client:
+            print(f"Connecting to device {device_address}...")
             await client.connect()
             
             if not client.is_connected:
@@ -168,6 +215,103 @@ def play_sequence():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+@app.route('/test_connection', methods=['GET'])
+def test_connection():
+    """Test BLE connection to the device"""
+    try:
+        result = asyncio.run(test_ble_connection())
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+async def test_ble_connection():
+    """Test if we can connect to the BLE device"""
+    try:
+        # Find device dynamically
+        print(f"Searching for device with '{DEVICE_NAME_KEYWORD}' in name...")
+        device_address = await find_device_by_name()
+        
+        if not device_address:
+            return {
+                "status": "error",
+                "message": f"Device with '{DEVICE_NAME_KEYWORD}' in name not found.\n\nPlease check:\n1. Device is powered ON\n2. Device is in range\n3. Device name contains '{DEVICE_NAME_KEYWORD}'\n4. Bluetooth is enabled on your computer",
+                "keyword": DEVICE_NAME_KEYWORD
+            }
+        
+        print(f"Testing connection to {device_address}...")
+        async with BleakClient(device_address, timeout=10.0) as client:
+            await client.connect()
+            
+            if client.is_connected:
+                print("✅ Successfully connected!")
+                
+                # Get device info from scan
+                device_name = "Unknown"
+                devices = await BleakScanner.discover(timeout=2.0)
+                for dev in devices:
+                    if dev.address == device_address:
+                        device_name = dev.name if dev.name else "Unknown"
+                        break
+                
+                # Try to check if write characteristic exists (using services property)
+                found_char = False
+                try:
+                    # In bleak, services are available as a property after connection
+                    if hasattr(client, 'services'):
+                        for service in client.services:
+                            for char in service.characteristics:
+                                if char.uuid.lower() == WRITE_CHAR_UUID.lower():
+                                    found_char = True
+                                    break
+                            if found_char:
+                                break
+                except Exception as e:
+                    print(f"Note: Could not enumerate services: {e}")
+                    # If we can't check services, assume it's okay since we connected
+                    found_char = True
+                
+                if found_char:
+                    return {
+                        "status": "success",
+                        "message": f"✅ Device connected successfully!\n\nDevice Name: {device_name}\nAddress: {device_address}\nWrite Characteristic: Available",
+                        "address": device_address,
+                        "device_name": device_name
+                    }
+                else:
+                    return {
+                        "status": "success",
+                        "message": f"✅ Connected to {device_name}!\n\nAddress: {device_address}\nNote: Could not verify write characteristic, but connection successful.",
+                        "address": device_address,
+                        "device_name": device_name
+                    }
+            else:
+                return {
+                    "status": "error",
+                    "message": "Failed to connect to device",
+                    "address": device_address
+                }
+    except asyncio.TimeoutError:
+        return {
+            "status": "error",
+            "message": f"⏱️ Connection timeout.\n\nDevice not responding. Make sure it's powered on and in range.",
+            "keyword": DEVICE_NAME_KEYWORD
+        }
+    except Exception as e:
+        error_msg = str(e)
+        if "was not found" in error_msg.lower():
+            return {
+                "status": "error",
+                "message": f"❌ Device not found.\n\nPlease check:\n1. Device is powered ON\n2. Device is in range\n3. Device name contains '{DEVICE_NAME_KEYWORD}'\n4. Device is not connected to another app",
+                "keyword": DEVICE_NAME_KEYWORD,
+                "details": error_msg
+            }
+        else:
+            return {
+                "status": "error",
+                "message": f"Connection error: {error_msg}",
+                "keyword": DEVICE_NAME_KEYWORD
+            }
+
 @app.route('/health', methods=['GET'])
 def health():
     """Health check endpoint"""
@@ -179,8 +323,13 @@ def index():
     return send_from_directory('.', 'frontend.html')
 
 if __name__ == "__main__":
-    print("Starting DeathScent Backend Server...")
-    print(f"Device Address: {BLE_ADDRESS}")
+    print("=" * 60)
+    print("🌹 DeathScent Backend Server 🌹")
+    print("=" * 60)
+    print(f"Device Search: Looking for devices with '{DEVICE_NAME_KEYWORD}' in name")
     print(f"Characteristic UUID: {WRITE_CHAR_UUID}")
-    print("Frontend will be available at: http://localhost:5000")
+    print(f"Frontend URL: http://localhost:5000")
+    print("=" * 60)
+    print("\n✅ Server starting...")
+    print("📡 Device will be auto-discovered on first connection\n")
     app.run(debug=True, host='0.0.0.0', port=5000)

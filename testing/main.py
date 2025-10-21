@@ -2,7 +2,7 @@ import asyncio
 from bleak import BleakClient
 import crcmod
 
-BLE_ADDRESS = "FC28F7A3-F547-7342-1F57-BB2939694BDC"
+BLE_ADDRESS = "F7C9C411-AEA2-2415-8BC2-2A56B42DC7F8"  # wear_08f9e0dfb9a6
 WRITE_CHAR_UUID = "6e400002-b5a3-f393-e0a9-e50e24dcca9e"
 
 def crc16_modbus(data: bytes) -> bytes:
