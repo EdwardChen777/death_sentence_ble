@@ -26,7 +26,16 @@ cd ../..
 export OPENAI_API_KEY="your-api-key-here"
 ```
 
-### 3. Start All Services (requires 3 terminal windows)
+### 3. Start All Services
+
+**🚀 EASY WAY - Single Command (Recommended):**
+```bash
+export OPENAI_API_KEY="your-key-here"
+./start_all.sh
+```
+This automatically opens 3 Terminal tabs with all services!
+
+**📋 MANUAL WAY - 3 Separate Terminals:**
 
 **Terminal 1 - BLE Backend:**
 ```bash
@@ -36,7 +45,7 @@ export OPENAI_API_KEY="your-api-key-here"
 
 **Terminal 2 - AI Backend:**
 ```bash
-./start_ai_backend.sh
+./restart_ai_backend.sh
 # Or manually: cd death_sentence/agents && uvicorn app:app --reload --port 8000
 ```
 

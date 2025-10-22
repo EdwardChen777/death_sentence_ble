@@ -37,11 +37,14 @@
 │ RUN (Every Time)                                                 │
 ├──────────────────────────────────────────────────────────────────┤
 │                                                                  │
-│  Open 3 terminal windows and run:                               │
+│  🚀 EASY WAY - Single command (opens 3 Terminal tabs):          │
+│     $ export OPENAI_API_KEY="your-key"                           │
+│     $ ./start_all.sh                                             │
 │                                                                  │
-│  Terminal 1: $ ./start_ble_backend.sh                            │
-│  Terminal 2: $ ./start_ai_backend.sh                             │
-│  Terminal 3: $ ./start_frontend.sh                               │
+│  📋 MANUAL WAY - Open 3 terminal windows and run:                │
+│     Terminal 1: $ ./start_ble_backend.sh                         │
+│     Terminal 2: $ ./start_ai_backend.sh                          │
+│     Terminal 3: $ ./start_frontend.sh                            │
 │                                                                  │
 │  Then open: http://localhost:8080                                │
 │                                                                  │
