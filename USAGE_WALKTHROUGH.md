@@ -237,7 +237,7 @@ You'll see the **Death Sentence Fragrance Synthesizer** interface:
    ────────────────────────────────────────
    
    Browser Alert:
-   ✅ Sequence is playing on your device!
+   ✅ Scentence completed!
    ```
 
 4. **Physical Device:**
