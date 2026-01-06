@@ -82,10 +82,14 @@
             background-color: #c82333;
         }
         .status {
-            padding: 10px;
+            padding: 15px;
             margin: 10px 0;
             border-radius: 5px;
-            text-align: center;
+            text-align: left;
+            white-space: pre-line;
+            font-family: monospace;
+            font-size: 14px;
+            animation: fadeIn 0.3s ease-in;
         }
         .status.success {
             background-color: #d4edda;
@@ -96,6 +100,19 @@
             background-color: #f8d7da;
             color: #721c24;
             border: 1px solid #f5c6cb;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .loading-spinner {
+            display: inline-block;
+            margin-right: 10px;
+            animation: spin 1s linear infinite;
         }
         .quick-scent {
             display: grid;
@@ -118,6 +135,10 @@
         <h1>🌹 DeathScent Controller</h1>
         
         <div id="status"></div>
+        
+        <div style="text-align: center; margin: 20px 0;">
+            <button onclick="testConnection()" style="background-color: #17a2b8;">🔍 Test Device Connection</button>
+        </div>
         
         <div class="form-group">
             <label for="scentId">Scent ID (1-12):</label>
@@ -154,13 +175,34 @@
 
     <script>
         let sequence = [];
+        let statusTimeout = null;
 
-        function showStatus(message, isError = false) {
+        function showStatus(message, isError = false, autoHide = true) {
             const statusDiv = document.getElementById('status');
+            
+            // Clear any existing timeout
+            if (statusTimeout) {
+                clearTimeout(statusTimeout);
+                statusTimeout = null;
+            }
+            
             statusDiv.innerHTML = `<div class="status ${isError ? 'error' : 'success'}">${message}</div>`;
-            setTimeout(() => {
-                statusDiv.innerHTML = '';
-            }, 5000);
+            
+            // Only auto-hide if specified
+            if (autoHide) {
+                statusTimeout = setTimeout(() => {
+                    statusDiv.innerHTML = '';
+                    statusTimeout = null;
+                }, 5000);
+            }
+        }
+        
+        function clearStatus() {
+            document.getElementById('status').innerHTML = '';
+            if (statusTimeout) {
+                clearTimeout(statusTimeout);
+                statusTimeout = null;
+            }
         }
 
         function addScent() {
@@ -222,6 +264,26 @@
             showStatus('Sequence cleared');
         }
 
+        async function testConnection() {
+            try {
+                showStatus('🔍 Scanning for device...\n⏳ Please wait...', false, false);
+                const response = await fetch('/test_connection', {
+                    method: 'GET',
+                    headers: {'Content-Type': 'application/json'}
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    showStatus(`${result.message}`, false, true);
+                } else {
+                    showStatus(`${result.message}`, true, true);
+                }
+            } catch (error) {
+                showStatus(`❌ Error testing connection: ${error.message}`, true, true);
+            }
+        }
+
         async function playSingleScent() {
             const id = parseInt(document.getElementById('scentId').value);
             const duration = parseInt(document.getElementById('duration').value);
@@ -232,7 +294,9 @@
             }
             
             try {
-                showStatus('Sending scent to device...');
+                // Show loading message that doesn't auto-hide
+                showStatus('🔍 Finding device...\n⏳ Please wait (this may take up to 10 seconds)...', false, false);
+                
                 const response = await fetch('/play_scent', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -242,12 +306,12 @@
                 const result = await response.json();
                 
                 if (result.status === 'success') {
-                    showStatus(`Successfully sent Scent ${id} for ${duration} seconds!`);
+                    showStatus(`✅ Successfully sent Scent ${id} for ${duration} seconds!\n\n${result.message}`, false, true);
                 } else {
-                    showStatus(`Error: ${result.message}`, true);
+                    showStatus(`❌ Error: ${result.message}`, true, true);
                 }
             } catch (error) {
-                showStatus(`Error: ${error.message}`, true);
+                showStatus(`❌ Error: ${error.message}`, true, true);
             }
         }
 
@@ -258,7 +322,7 @@
             }
             
             try {
-                showStatus('Sending sequence to device...');
+                showStatus('🔍 Finding device and starting sequence...\n⏳ Please wait...', false, false);
                 const response = await fetch('/play_sequence', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -268,12 +332,12 @@
                 const result = await response.json();
                 
                 if (result.status === 'success') {
-                    showStatus('Sequence completed successfully!');
+                    showStatus('✅ Sequence completed successfully!', false, true);
                 } else {
-                    showStatus(`Error: ${result.message}`, true);
+                    showStatus(`❌ Error: ${result.message}`, true, true);
                 }
             } catch (error) {
-                showStatus(`Error: ${error.message}`, true);
+                showStatus(`❌ Error: ${error.message}`, true, true);
             }
         }
 
