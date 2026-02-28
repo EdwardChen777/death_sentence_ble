@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import json
 from typing import Any, Dict
 
@@ -8,6 +9,15 @@ from openai import OpenAI
 
 from .schemas import ComposeResponse
 from .settings import settings
+
+
+def transcribe_audio(audio_bytes: bytes, filename: str = "audio.webm") -> str:
+    """Transcribe audio using OpenAI Whisper API."""
+    client = OpenAI(api_key=settings.openai_api_key)
+    file_like = io.BytesIO(audio_bytes)
+    file_like.name = filename
+    response = client.audio.transcriptions.create(model="whisper-1", file=file_like)
+    return response.text
 
 
 def _render_system_prompt(scents: Dict[str, Any]) -> str:
