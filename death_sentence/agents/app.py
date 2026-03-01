@@ -4,12 +4,12 @@ import json
 from pathlib import Path
 from typing import Dict, Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 from .schemas import ComposeRequest, ComposeResponse
 from .settings import settings
-from .openai_client import compose_with_openai
+from .openai_client import compose_with_openai, transcribe_audio
 
 
 def load_scents() -> Dict[str, Any]:
@@ -51,6 +51,21 @@ def compose(request: ComposeRequest) -> ComposeResponse:
         return result
     except Exception as e:
         # Surface errors for debugging; in production, sanitize
+        raise HTTPException(status_code=422, detail=str(e))
+
+
+@app.post("/transcribe")
+async def transcribe(audio: UploadFile = File(...)) -> Dict[str, str]:
+    """Transcribe audio using OpenAI Whisper."""
+    if not settings.openai_api_key:
+        raise HTTPException(status_code=500, detail="OPENAI_API_KEY not configured")
+    if not audio.content_type or not audio.content_type.startswith("audio/"):
+        raise HTTPException(status_code=400, detail="Expected an audio file")
+    try:
+        content = await audio.read()
+        text = transcribe_audio(content, audio.filename or "audio.webm")
+        return {"text": text}
+    except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
 
 

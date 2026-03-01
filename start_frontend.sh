@@ -7,7 +7,7 @@ echo "  Death Sentence Frontend"
 echo "========================================"
 echo ""
 
-cd death_sentence
+cd death_sentence/business_demo
 
 echo "✅ Starting frontend server on port 8080..."
 echo ""
@@ -17,5 +17,4 @@ echo "Press Ctrl+C to stop"
 echo ""
 
 python3 -m http.server 8080
-
 
