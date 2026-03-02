@@ -22,9 +22,9 @@ echo "📦 Installing dependencies..."
 pip install -q -r requirements.txt
 
 echo ""
-echo "✅ Starting BLE Backend on port 5000..."
-echo "   API: http://localhost:5000"
-echo "   Frontend: http://localhost:5000"
+echo "✅ Starting BLE Backend on port 5001..."
+echo "   API: http://localhost:5001"
+echo "   Frontend: http://localhost:5001"
 echo ""
 echo "🔍 Searching for BLE devices with 'wear' in name..."
 echo ""

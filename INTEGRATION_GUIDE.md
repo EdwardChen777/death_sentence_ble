@@ -13,7 +13,7 @@ The system now combines two powerful features:
 ```
 ┌─────────────────────────┐      ┌─────────────────────────┐
 │  Death Sentence AI      │      │   BLE Backend           │
-│  (FastAPI on :8000)     │      │   (Flask on :5000)      │
+│  (FastAPI on :8000)     │      │   (Flask on :5001)      │
 │                         │      │                         │
 │  - Generates sequences  │◄────►│  - Controls BLE device  │
 │  - Frontend UI          │ CORS │  - Plays sequences      │
@@ -65,7 +65,7 @@ You'll need **two terminal windows** running simultaneously:
 python backend.py
 ```
 
-This will start the BLE control server on `http://localhost:5000`
+This will start the BLE control server on `http://localhost:5001`
 
 #### Terminal 2: AI Backend (FastAPI)
 ```bash
@@ -135,7 +135,7 @@ The AI generates sequences using these scent names, mapped to device locations:
 ## Troubleshooting
 
 ### "Could not connect to BLE backend"
-- Ensure Flask backend is running on port 5000
+- Ensure Flask backend is running on port 5001
 - Check that CORS is enabled (flask-cors installed)
 
 ### "Device not found"
@@ -179,7 +179,7 @@ Edit `death_sentence/scent_classification.json`:
 
 ## API Endpoints
 
-### BLE Backend (Flask - :5000)
+### BLE Backend (Flask - :5001)
 - `GET /test_connection` - Test BLE device connection
 - `POST /play_scent` - Play single scent
   ```json

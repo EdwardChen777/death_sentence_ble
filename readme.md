@@ -97,7 +97,7 @@ If you get "Device not found" errors:
 
 ### Step 2: Test the connection
 1. Run `python run.py`
-2. Open http://localhost:5000
+2. Open http://localhost:5001
 3. Click **"🔍 Test Device Connection"** button
 4. It will show the device name and address if found
 

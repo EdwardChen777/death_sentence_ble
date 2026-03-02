@@ -99,11 +99,25 @@ document.querySelector('.cta-button')?.addEventListener('mouseleave', function (
         var text = data.text || '';
         setTranscription(text);
         updateProgress('Fetching database', 45);
-        updateProgress('Composing scent', 70);
-        return composeScent(text).then(function (sequence) {
+
+        var scentPromise;
+        if (isInFeedbackMode) {
+          updateProgress('Refining scent', 70);
+          scentPromise = feedbackScent(text);
+        } else {
+          updateProgress('Composing scent', 70);
+          scentPromise = composeScent(text);
+        }
+
+        return scentPromise.then(function (sequence) {
           setStatus('');
-          console.log("passing transcription to composeScent");
           if (sequence && sequence.length) {
+            // On first compose, enter feedback mode
+            if (!isInFeedbackMode) {
+              sessionOriginalSentence = text;
+              sessionOriginalSequence = sequence;
+              isInFeedbackMode = true;
+            }
             currentSequence = sequence;
             console.log("rendering scent");
             console.log(sequence);
@@ -134,8 +148,10 @@ document.querySelector('.cta-button')?.addEventListener('mouseleave', function (
 
     chunks = [];
     setRecording(true);
-    // Reset UI for new run
-    renderProfile([]);
+    // Reset UI for new run (only clear nodes on first compose, not during feedback)
+    if (!isInFeedbackMode) {
+      renderProfile([]);
+    }
     hideProgress();
     setTranscription('');
     setStatus('');
@@ -188,6 +204,12 @@ const baseNotes = [];
 let scentsData = {};
 let currentSequence = null; // Store the last generated sequence for playback
 
+// Feedback loop session state
+let sessionOriginalSentence = null;
+let sessionOriginalSequence = null;
+let sessionHistory = []; // Array of {feedback_text, changes_made, resulting_sequence}
+let isInFeedbackMode = false;
+
 // Attempt to load scent names dynamically from JSON (keys become base notes)
 fetch('../scent_classification.json')
   .then(r => { if (!r.ok) throw new Error('Missing scent_classification.json'); return r.json(); })
@@ -220,6 +242,46 @@ async function composeScent(sentence) {
     alert('Network error calling composition service. Is the backend running on :8000?');
     return null;
   }
+}
+
+async function feedbackScent(feedbackText) {
+  try {
+    const res = await fetch(API_BASE + '/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        original_sentence: sessionOriginalSentence,
+        original_sequence: sessionOriginalSequence,
+        prior_rounds: sessionHistory,
+        latest_feedback: feedbackText
+      })
+    });
+    if (!res.ok) {
+      const msg = await res.text();
+      alert(`Refinement failed: ${msg}`);
+      return null;
+    }
+    const data = await res.json();
+    if (data.scent_sequence) {
+      sessionHistory.push({
+        feedback_text: feedbackText,
+        changes_made: data.changes_made || '',
+        resulting_sequence: data.scent_sequence
+      });
+    }
+    return data.scent_sequence || null;
+  } catch (err) {
+    console.error(err);
+    alert('Network error calling feedback service. Is the backend running on :8000?');
+    return null;
+  }
+}
+
+function resetSession() {
+  sessionOriginalSentence = null;
+  sessionOriginalSequence = null;
+  sessionHistory = [];
+  isInFeedbackMode = false;
 }
 
 function computeMortality(prompt) {
@@ -303,7 +365,7 @@ async function playSequenceOnDevice() {
     const playBtn = document.getElementById('playSequenceBtn');
     if (playBtn) playBtn.disabled = true;
 
-    const response = await fetch('http://localhost:5000/play_sequence', {
+    const response = await fetch('http://localhost:5001/play_sequence', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sequence: bleSequence })
@@ -318,7 +380,7 @@ async function playSequenceOnDevice() {
     }
   } catch (err) {
     console.error('BLE Error:', err);
-    alert('❌ Could not connect to BLE device. Make sure:\n1. The Flask backend is running on :5000\n2. Your BLE device is powered on\n3. Device is in range');
+    alert('❌ Could not connect to BLE device. Make sure:\n1. The Flask backend is running on :5001\n2. Your BLE device is powered on\n3. Device is in range');
   } finally {
     setLoading(false);
     const playBtn = document.getElementById('playSequenceBtn');
@@ -329,7 +391,7 @@ async function playSequenceOnDevice() {
 async function testBLEConnection() {
   try {
     setLoading(true);
-    const response = await fetch('http://localhost:5000/test_connection', {
+    const response = await fetch('http://localhost:5001/test_connection', {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' }
     });
@@ -343,7 +405,7 @@ async function testBLEConnection() {
     }
   } catch (err) {
     console.error('Connection test error:', err);
-    alert('❌ Could not connect to BLE backend. Make sure the Flask server is running on :5000');
+    alert('❌ Could not connect to BLE backend. Make sure the Flask server is running on :5001');
   } finally {
     setLoading(false);
   }

@@ -270,7 +270,7 @@ async function playSequenceOnDevice() {
     const playBtn = document.getElementById('playSequenceBtn');
     if (playBtn) playBtn.disabled = true;
 
-    const response = await fetch('http://localhost:5000/play_sequence', {
+    const response = await fetch('http://localhost:5001/play_sequence', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sequence: bleSequence })
@@ -285,7 +285,7 @@ async function playSequenceOnDevice() {
     }
   } catch (err) {
     console.error('BLE Error:', err);
-    alert('❌ Could not connect to BLE device. Make sure:\n1. The Flask backend is running on :5000\n2. Your BLE device is powered on\n3. Device is in range');
+    alert('❌ Could not connect to BLE device. Make sure:\n1. The Flask backend is running on :5001\n2. Your BLE device is powered on\n3. Device is in range');
   } finally {
     setLoading(false);
     const playBtn = document.getElementById('playSequenceBtn');
@@ -296,7 +296,7 @@ async function playSequenceOnDevice() {
 async function testBLEConnection() {
   try {
     setLoading(true);
-    const response = await fetch('http://localhost:5000/test_connection', {
+    const response = await fetch('http://localhost:5001/test_connection', {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' }
     });
@@ -310,7 +310,7 @@ async function testBLEConnection() {
     }
   } catch (err) {
     console.error('Connection test error:', err);
-    alert('❌ Could not connect to BLE backend. Make sure the Flask server is running on :5000');
+    alert('❌ Could not connect to BLE backend. Make sure the Flask server is running on :5001');
   } finally {
     setLoading(false);
   }

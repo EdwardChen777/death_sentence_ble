@@ -50,13 +50,13 @@ cd /Users/awwu/Downloads/death_sentence_ble
 ========================================
 Device Search: Looking for devices with 'wear' in name
 Characteristic UUID: 6e400002-b5a3-f393-e0a9-e50e24dcca9e
-Frontend URL: http://localhost:5000
+Frontend URL: http://localhost:5001
 ========================================
 
 ✅ Server starting...
 📡 Device will be auto-discovered on first connection
 
- * Running on http://0.0.0.0:5000
+ * Running on http://0.0.0.0:5001
 ```
 
 #### Terminal 2: AI Backend 🟢
@@ -327,7 +327,7 @@ becoming one with moss and decay"
 │       │                                                 │
 │       │ ──Convert Names to IDs──                        │
 │       │                                                 │
-│       │──POST──> BLE Backend (5000)                     │
+│       │──POST──> BLE Backend (5001)                     │
 │                      │                                  │
 │                 Find Device                             │
 │                      │                                  │
@@ -397,7 +397,7 @@ Edit `death_sentence/scent_classification.json`:
 | Issue | Solution |
 |-------|----------|
 | "Cannot connect to 8000" | Start AI backend |
-| "Cannot connect to 5000" | Start BLE backend |
+| "Cannot connect to 5001" | Start BLE backend |
 | "Device not found" | Turn device ON, move closer |
 | "OPENAI_API_KEY not set" | `export OPENAI_API_KEY="..."` |
 | "Sequence not playing" | Check device battery |

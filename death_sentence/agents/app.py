@@ -7,9 +7,9 @@ from typing import Dict, Any
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
-from .schemas import ComposeRequest, ComposeResponse
+from .schemas import ComposeRequest, ComposeResponse, FeedbackRequest, FeedbackResponse
 from .settings import settings
-from .openai_client import compose_with_openai, transcribe_audio
+from .openai_client import compose_with_openai, refine_with_openai, transcribe_audio
 
 
 def load_scents() -> Dict[str, Any]:
@@ -51,6 +51,23 @@ def compose(request: ComposeRequest) -> ComposeResponse:
         return result
     except Exception as e:
         # Surface errors for debugging; in production, sanitize
+        raise HTTPException(status_code=422, detail=str(e))
+
+
+@app.post("/feedback", response_model=FeedbackResponse)
+def feedback(request: FeedbackRequest) -> FeedbackResponse:
+    try:
+        scents = load_scents()
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    if not settings.openai_api_key:
+        raise HTTPException(status_code=500, detail="OPENAI_API_KEY not configured")
+
+    try:
+        result = refine_with_openai(request, scents)
+        return result
+    except Exception as e:
         raise HTTPException(status_code=422, detail=str(e))
 
 

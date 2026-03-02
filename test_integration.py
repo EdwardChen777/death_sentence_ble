@@ -66,7 +66,7 @@ def check_integration_code():
         checks = [
             ('playSequenceOnDevice' in content, "Play sequence function"),
             ('testBLEConnection' in content, "Test BLE connection function"),
-            ('localhost:5000' in content, "BLE backend URL"),
+            ('localhost:5001' in content, "BLE backend URL"),
             ('currentSequence' in content, "Sequence storage"),
         ]
         

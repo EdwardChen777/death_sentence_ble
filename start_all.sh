@@ -3,7 +3,7 @@
 # Start All Death Sentence Services
 # Opens 3 terminal tabs - one for each service
 
-PROJECT_DIR="/Users/awwu/Downloads/death_sentence_ble"
+PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 echo "╔════════════════════════════════════════════════════════╗"
 echo "║  Starting All Death Sentence Services                 ║"
@@ -27,7 +27,7 @@ tell application "Terminal"
     activate
     
     -- Tab 1: BLE Backend
-    do script "cd '$PROJECT_DIR' && echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' && echo '  🔵 BLE Backend (Port 5000)' && echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' && echo '' && ./start_ble_backend.sh"
+    do script "cd '$PROJECT_DIR' && echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' && echo '  🔵 BLE Backend (Port 5001)' && echo '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' && echo '' && ./start_ble_backend.sh"
     
     -- Wait a moment
     delay 1
@@ -54,7 +54,7 @@ echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  📋 Service URLs:"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  🔵 BLE Backend:    http://localhost:5000"
+echo "  🔵 BLE Backend:    http://localhost:5001"
 echo "  🟢 AI Backend:     http://localhost:8000"
 echo "  🟡 Frontend:       http://localhost:8080"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

@@ -71,7 +71,7 @@ The Death Sentence AI and BLE Device Control systems have been successfully merg
                 ▼                      ▼
     ┌────────────────────┐  ┌────────────────────┐
     │   AI Backend       │  │   BLE Backend      │
-    │   (port 8000)      │  │   (port 5000)      │
+    │   (port 8000)      │  │   (port 5001)      │
     │                    │  │                    │
     │  - OpenAI API      │  │  - Bleak Library   │
     │  - Sequence Gen    │  │  - Device Control  │
@@ -116,7 +116,7 @@ BLE Sequence (scent IDs):
   {"scent_id": 5, "duration": 15}    // Mourning Wreath → Location 5
 ]
     ↓
-Flask Backend (port 5000)
+Flask Backend (port 5001)
     ↓
 BLE Commands (hex bytes with CRC)
     ↓
@@ -166,7 +166,7 @@ open http://localhost:8080
 ## Troubleshooting
 
 ### Issue: "Could not connect to BLE backend"
-**Solution**: Ensure Flask backend is running on port 5000
+**Solution**: Ensure Flask backend is running on port 5001
 
 ### Issue: "Device not found"
 **Solution**: Check device is ON, in range, and name contains "wear"

@@ -24,7 +24,7 @@ kill_port() {
 }
 
 # Kill all services
-kill_port 5000 "BLE Backend"
+kill_port 5001 "BLE Backend"
 kill_port 8000 "AI Backend"
 kill_port 8080 "Frontend Server"
 
