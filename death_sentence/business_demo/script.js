@@ -214,7 +214,7 @@ let sessionHistory = []; // Array of {feedback_text, changes_made, resulting_seq
 let isInFeedbackMode = false;
 
 // Attempt to load scent names dynamically from JSON (keys become base notes)
-fetch('../scent_classification.json')
+fetch('./scent_classification.json')
   .then(r => { if (!r.ok) throw new Error('Missing scent_classification.json'); return r.json(); })
   .then(data => {
     scentsData = data || {};
@@ -351,17 +351,26 @@ async function playSequenceOnDevice() {
     return;
   }
 
-  // Convert scent names to scent_ids using the location field
-  const bleSequence = currentSequence.map(item => {
+  // Convert scent names to scent_ids using the location field, skipping unknown scents
+  const bleSequence = [];
+  for (const item of currentSequence) {
     const meta = scentsData[item.scent_name];
     if (!meta || !meta.location) {
-      throw new Error(`Location not found for scent: ${item.scent_name}`);
+      console.warn(`Skipping scent with no device location: ${item.scent_name}`);
+      continue;
     }
-    return {
-      scent_id: parseInt(meta.location),
-      duration: item.scent_duration
-    };
-  });
+    const locId = parseInt(meta.location);
+    if (locId < 1 || locId > 12) {
+      console.warn(`Skipping scent outside device range (1-12): ${item.scent_name} (location=${locId})`);
+      continue;
+    }
+    bleSequence.push({ scent_id: locId, duration: item.scent_duration });
+  }
+
+  if (bleSequence.length === 0) {
+    alert('No playable scents in sequence (all scents are outside device range 1-12).');
+    return;
+  }
 
   try {
     setLoading(true);
