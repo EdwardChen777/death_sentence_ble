@@ -239,6 +239,7 @@ async function composeScent(sentence) {
       return null;
     }
     const data = await res.json();
+    console.log('[Compose] Justification:', data.justification);
     return data.scent_sequence || null;
   } catch (err) {
     console.error(err);
@@ -272,6 +273,8 @@ async function feedbackScent(feedbackText) {
         resulting_sequence: data.scent_sequence
       });
     }
+    console.log('[Feedback] Justification:', data.justification);
+    console.log('[Feedback] Changes made:', data.changes_made);
     return data.scent_sequence || null;
   } catch (err) {
     console.error(err);
