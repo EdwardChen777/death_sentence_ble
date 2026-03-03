@@ -17,7 +17,12 @@ def load_scents() -> Dict[str, Any]:
     if not path.exists():
         raise FileNotFoundError(f"Scents JSON not found at {path}")
     with path.open("r", encoding="utf-8") as f:
-        return json.load(f)
+        all_scents = json.load(f)
+    # Only include scents with device locations 1-12
+    return {
+        name: info for name, info in all_scents.items()
+        if 1 <= int(info.get("location", 0)) <= 12
+    }
 
 
 app = FastAPI(title="Etherea Scent Composer")

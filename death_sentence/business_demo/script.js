@@ -121,9 +121,12 @@ document.querySelector('.cta-button')?.addEventListener('mouseleave', function (
             currentSequence = sequence;
             console.log("rendering scent");
             console.log(sequence);
-            updateProgress('Complete', 100);
+            updateProgress('Playing on device', 95);
             renderProfile(sequence);
-            setTimeout(hideProgress, 800);
+            playSequenceOnDevice().finally(function () {
+              updateProgress('Complete', 100);
+              setTimeout(hideProgress, 800);
+            });
           } else {
             setStatus('No scent sequence generated.');
             updateProgress('No scent generated', 100);
